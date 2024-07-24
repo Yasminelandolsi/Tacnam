@@ -1,0 +1,45 @@
+name: Angular CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'  # or '18' based on your requirements
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build Angular application
+      run: npm run build --if-present
+
+    - name: Run tests
+      run: npm test -- --watch=false --browsers=ChromeHeadless
+
+    - name: Run Qodana
+      uses: jetbrains/qodana-action@v2
+      with:
+        config-file: qodana.yaml  # Path to your Qodana configuration file
+      env:
+        QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}  # Optional: Your Qodana token if needed
+
+    - name: Upload coverage results
+      if: success() || failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-results
+        path: coverage
